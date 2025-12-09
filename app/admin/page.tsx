@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowDownTrayIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import * as XLSX from "xlsx";
@@ -47,6 +47,7 @@ export default function AdminPage() {
     const formatted = records.map((r, index) => ({
       No: index + 1,
       Nama: r.name,
+      Outlet: r.outlet_name || "-",
       Foto: r.photo_url,
       Waktu: new Date(r.created_at).toLocaleString("id-ID"),
       Alamat: r.address,
@@ -62,10 +63,9 @@ export default function AdminPage() {
     saveAs(file, `data-presensi-${filterDate || "all"}.xlsx`);
   };
 
-  // Skeleton loader
   const SkeletonRow = () => (
     <TableRow>
-      {[1, 2, 3, 4, 5].map((i) => (
+      {[1, 2, 3, 4, 5, 6].map((i) => (
         <TableCell key={i}>
           <div className="h-6 bg-gray-200/50 rounded animate-pulse"></div>
         </TableCell>
@@ -75,26 +75,24 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 md:p-8 flex justify-center relative overflow-hidden">
-      
-      {/* Background decoration */}
+
       <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10"></div>
 
       <Card className="w-full max-w-6xl bg-white/95 backdrop-blur-2xl shadow-2xl rounded-2xl border border-white/60 overflow-hidden hover:shadow-3xl transition-all duration-300">
-        
-        {/* Header dengan gradient */}
+
         <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500"></div>
 
         <CardHeader className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 md:gap-6 pb-6 pt-8">
           <div>
             <CardTitle className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-               Dashboard Admin
+              Dashboard Admin
             </CardTitle>
             <p className="text-gray-500 text-sm mt-1">Kelola data presensi sales</p>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-            {/* FILTER TANGGAL */}
+
             <div className="relative flex-1 sm:flex-none">
               <MagnifyingGlassIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
@@ -105,7 +103,6 @@ export default function AdminPage() {
               />
             </div>
 
-            {/* DOWNLOAD BUTTON */}
             <Button
               onClick={exportToExcel}
               disabled={records.length === 0}
@@ -119,14 +116,16 @@ export default function AdminPage() {
 
         <CardContent className="px-4 md:px-6 pb-8">
           <div className="w-full overflow-x-auto rounded-lg border border-gray-200/50">
-            <Table className="min-w-full">
+            <Table className="min-w-full table-fixed">
+
               <TableHeader className="bg-gradient-to-r from-indigo-50/50 to-blue-50/50 border-b border-gray-200/50">
                 <TableRow>
-                  <TableHead className="text-center text-sm font-semibold text-gray-700 h-12">No</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-gray-700">Nama</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-gray-700">Foto</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-gray-700">Waktu</TableHead>
-                  <TableHead className="text-center text-sm font-semibold text-gray-700">Alamat</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 h-12 w-[60px]">No</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 w-[150px]">Nama</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 w-[150px]">Customer / Outlet</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 w-[90px]">Foto</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 w-[130px]">Waktu</TableHead>
+                  <TableHead className="text-center text-sm font-semibold text-gray-700 w-[200px]">Alamat</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -139,7 +138,7 @@ export default function AdminPage() {
                   </>
                 ) : records.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12">
+                    <TableCell colSpan={6} className="text-center py-12">
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-3xl">📭</span>
                         <p className="text-gray-500 font-medium">Tidak ada data presensi</p>
@@ -149,78 +148,95 @@ export default function AdminPage() {
                   </TableRow>
                 ) : (
                   records.map((rec, index) => (
-                    <TableRow 
-                      key={rec.id} 
+                    <TableRow
+                      key={rec.id}
                       className="hover:bg-indigo-50/40 transition-colors border-b border-gray-100 last:border-b-0"
                     >
-                      <TableCell className="text-center text-sm md:text-base text-gray-700 font-medium py-4">
+                      <TableCell className="w-[60px] text-center text-sm md:text-base text-gray-700 font-medium py-4">
                         {index + 1}
                       </TableCell>
-                      
-                      <TableCell className="text-center text-sm md:text-base text-gray-700 font-medium py-4">
-                        {rec.name}
+
+                      {/* ⭐ NAMA (scrollable) */}
+                      <TableCell className="w-[150px] text-center py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
+                          {rec.name}
+                        </div>
+                      </TableCell>
+
+                      {/* ⭐ OUTLET (scrollable) */}
+                      <TableCell className="w-[150px] text-center py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
+                          {rec.outlet_name || "-"}
+                        </div>
                       </TableCell>
 
                       {/* FOTO */}
-                      <TableCell className="flex justify-center py-4">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <div className="cursor-pointer group relative">
-                              <img
-                                src={rec.photo_url}
-                                className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all"
-                                alt="foto presensi"
-                              />
-                              <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/20 transition-all"></div>
-                            </div>
-                          </DialogTrigger>
+                      <TableCell className="w-[90px] py-4">
+                        <div className="w-full h-full flex justify-center items-center">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <div className="cursor-pointer group relative">
+                                <img
+                                  src={rec.photo_url}
+                                  className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all"
+                                  alt="foto presensi"
+                                />
+                                <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/20 transition-all"></div>
+                              </div>
+                            </DialogTrigger>
 
-                          <DialogContent className="p-0 bg-black/95 border-none max-w-full flex justify-center items-center rounded-xl">
-                            <div className="relative">
-                              <img
-                                src={rec.photo_url}
-                                className="max-h-[90vh] max-w-[90vw] rounded-lg"
-                                alt="zoom"
-                              />
-                              <a
-                                href={rec.photo_url}
-                                download
-                                className="absolute top-4 right-4 bg-white/95 hover:bg-white text-black px-4 py-2 rounded-lg shadow-lg text-sm font-semibold transition-all"
-                              >
-                                💾 Download
-                              </a>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                            <DialogContent className="p-0 bg-black/95 border-none max-w-full flex justify-center items-center rounded-xl">
+                              <div className="relative">
+                                <img
+                                  src={rec.photo_url}
+                                  className="max-h-[90vh] max-w-[90vw] rounded-lg"
+                                  alt="zoom"
+                                />
+                                <a
+                                  href={rec.photo_url}
+                                  download
+                                  className="absolute top-4 right-4 bg-white/95 hover:bg-white text-black px-4 py-2 rounded-lg shadow-lg text-sm font-semibold transition-all"
+                                >
+                                  💾 Download
+                                </a>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </TableCell>
 
+
+
                       {/* WAKTU */}
-                      <TableCell className="text-center text-sm md:text-base py-4">
+                      <TableCell className="w-[130px] text-center text-sm md:text-base py-4">
                         <Badge className="rounded-lg px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs md:text-sm shadow-md font-semibold">
                           {new Date(rec.created_at).toLocaleString("id-ID")}
                         </Badge>
                       </TableCell>
 
-                      {/* ALAMAT */}
-                      <TableCell className="text-sm text-gray-700 max-w-xs py-4">
-                        <span className="line-clamp-2 hover:line-clamp-none transition-all" title={rec.address}>
+                      {/* ⭐ ALAMAT (scrollable) */}
+                      <TableCell className="w-[200px] text-left py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
                           {rec.address}
-                        </span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
+
             </Table>
           </div>
 
-          {/* Info count */}
           {!isLoading && records.length > 0 && (
             <div className="mt-4 text-sm text-gray-600 flex justify-between items-center">
-              <span>Total: <span className="font-semibold text-indigo-600">{records.length}</span> presensi</span>
+              <span>
+                Total: <span className="font-semibold text-indigo-600">{records.length}</span> presensi
+              </span>
             </div>
           )}
         </CardContent>
+
       </Card>
     </div>
   );

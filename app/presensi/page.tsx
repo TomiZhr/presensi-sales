@@ -2,12 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,16 +10,22 @@ import { ArrowPathIcon, CheckCircleIcon, MapPinIcon } from "@heroicons/react/24/
 
 export default function PresensiPage() {
   const [name, setName] = useState("");
+  const [outlet, setOutlet] = useState(""); // ✅ Tambahan
+
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const [coords, setCoords] = useState<{ lat: number; long: number } | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; long: number } | null>(
+    null
+  );
   const [address, setAddress] = useState<string>("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshStatus, setRefreshStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [refreshStatus, setRefreshStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -94,8 +95,7 @@ export default function PresensiPage() {
           );
           const data = await res.json();
           setAddress(data.display_name || "Alamat tidak ditemukan");
-          
-          // Simulasi success animation
+
           setRefreshStatus("success");
           setTimeout(() => {
             setRefreshStatus("idle");
@@ -127,8 +127,10 @@ export default function PresensiPage() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !photoBlob || !coords || !address) {
-      setError("❌ Nama, foto, lokasi, dan alamat wajib diisi!");
+    if (!name || !outlet || !photoBlob || !coords || !address) {
+      setError(
+        "❌ Nama, outlet, foto, lokasi, dan alamat wajib diisi!"
+      );
       return;
     }
 
@@ -148,6 +150,7 @@ export default function PresensiPage() {
 
       const { error: insertError } = await supabase.from("presensi").insert({
         name,
+        outlet_name: outlet, // ✅ Tambahan
         photo_url,
         latitude: coords.lat,
         longitude: coords.long,
@@ -156,9 +159,9 @@ export default function PresensiPage() {
 
       if (insertError) throw new Error("Gagal simpan data");
 
-      // Success animation
       alert("✅ Presensi berhasil!");
       setName("");
+      setOutlet(""); // ✅ Reset outlet
       setPreview(null);
       setPhotoBlob(null);
       setCoords(null);
@@ -172,14 +175,10 @@ export default function PresensiPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 relative overflow-hidden">
-      
-      {/* Background decoration */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10"></div>
 
       <Card className="w-full max-w-lg bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/60 overflow-hidden hover:shadow-3xl transition-all duration-300">
-        
-        {/* Header dengan gradient */}
         <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500"></div>
 
         <CardHeader className="text-center pt-8 pb-6">
@@ -199,14 +198,28 @@ export default function PresensiPage() {
         )}
 
         <CardContent className="space-y-6 px-8 pb-8">
-          
           {/* NAMA */}
           <div className="space-y-2">
-            <Label className="text-sm font-semibold text-gray-700">Nama Lengkap</Label>
-            <Input 
-              placeholder="Masukkan nama Anda" 
-              value={name} 
+            <Label className="text-sm font-semibold text-gray-700">
+              Nama Lengkap
+            </Label>
+            <Input
+              placeholder="Masukkan nama Anda"
+              value={name}
               onChange={(e) => setName(e.target.value)}
+              className="h-11 bg-gray-50/80 border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/50 rounded-lg transition-all"
+            />
+          </div>
+
+          {/* OUTLET - DITAMBAHKAN */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700">
+              Nama Customer / Outlet
+            </Label>
+            <Input
+              placeholder="Masukkan nama customer / outlet"
+              value={outlet}
+              onChange={(e) => setOutlet(e.target.value)}
               className="h-11 bg-gray-50/80 border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300/50 rounded-lg transition-all"
             />
           </div>
@@ -226,7 +239,6 @@ export default function PresensiPage() {
                 style={{ transform: "scaleX(-1)" }}
               />
 
-              {/* Tombol shutter */}
               <div className="absolute bottom-4 left-0 right-0 flex justify-center">
                 <button
                   onClick={takePhoto}
@@ -261,13 +273,25 @@ export default function PresensiPage() {
                 <>
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-xs text-gray-600 font-medium">Koordinat</p>
+                      <p className="text-xs text-gray-600 font-medium">
+                        Koordinat
+                      </p>
                       <p className="text-sm text-gray-800 font-mono">
-                        <span className="block">📍 Lat: <span className="font-semibold">{coords.lat.toFixed(6)}</span></span>
-                        <span className="block">📍 Lon: <span className="font-semibold">{coords.long.toFixed(6)}</span></span>
+                        <span className="block">
+                          📍 Lat:{" "}
+                          <span className="font-semibold">
+                            {coords.lat.toFixed(6)}
+                          </span>
+                        </span>
+                        <span className="block">
+                          📍 Lon:{" "}
+                          <span className="font-semibold">
+                            {coords.long.toFixed(6)}
+                          </span>
+                        </span>
                       </p>
                     </div>
-                    {/* Tombol refresh lokasi */}
+
                     <button
                       onClick={getLocationWithAddress}
                       disabled={isRefreshing}
@@ -297,8 +321,12 @@ export default function PresensiPage() {
 
                   {address && (
                     <div className="pt-2 border-t border-indigo-200/50">
-                      <p className="text-xs text-gray-600 font-medium mb-1">Alamat</p>
-                      <p className="text-sm text-gray-800 leading-relaxed">{address}</p>
+                      <p className="text-xs text-gray-600 font-medium mb-1">
+                        Alamat
+                      </p>
+                      <p className="text-sm text-gray-800 leading-relaxed">
+                        {address}
+                      </p>
                     </div>
                   )}
                 </>
@@ -311,7 +339,7 @@ export default function PresensiPage() {
             </div>
           </div>
 
-          {/* SUBMIT BUTTON */}
+          {/* SUBMIT */}
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
@@ -327,10 +355,10 @@ export default function PresensiPage() {
             )}
           </Button>
 
-          {/* LINK KE LOGIN */}
+          {/* LINK */}
           <div className="text-center pt-2">
-            <a 
-              href="/login" 
+            <a
+              href="/login"
               className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold transition"
             >
               🔐 Login Admin
@@ -339,7 +367,6 @@ export default function PresensiPage() {
         </CardContent>
       </Card>
 
-      {/* Footer */}
       <p className="mt-8 text-gray-500 text-sm">
         © 2025 Presensi Sales. All rights reserved.
       </p>
