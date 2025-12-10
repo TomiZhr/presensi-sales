@@ -14,7 +14,20 @@ import { saveAs } from "file-saver";
 export default function AdminPage() {
   const [records, setRecords] = useState<any[]>([]);
   const [filterDate, setFilterDate] = useState<string>("");
+  const [filterMonth, setFilterMonth] = useState<string>(""); // NEW
   const [isLoading, setIsLoading] = useState(true);
+
+  // 🔵 NEW: handle perubahan tanggal → otomatis ambil bulan
+  const handleDateChange = (value: string) => {
+    setFilterDate(value);
+
+    if (value) {
+      const month = value.slice(0, 7); // YYYY-MM
+      setFilterMonth(month);
+    } else {
+      setFilterMonth("");
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -26,12 +39,23 @@ export default function AdminPage() {
 
       if (!data) return;
 
-      const filtered = filterDate
-        ? data.filter((r) => {
-            const recordDate = new Date(r.created_at).toISOString().split("T")[0];
-            return recordDate === filterDate;
-          })
-        : data;
+      let filtered = data;
+
+      // 🔵 Filter berdasarkan bulan (YYYY-MM)
+      if (filterMonth) {
+        filtered = filtered.filter((r) => {
+          const month = r.created_at.slice(0, 7); // YYYY-MM
+          return month === filterMonth;
+        });
+      }
+
+      // 🔵 Filter tanggal spesifik (opsional)
+      if (filterDate) {
+        filtered = filtered.filter((r) => {
+          const recordDate = r.created_at.split("T")[0];
+          return recordDate === filterDate;
+        });
+      }
 
       setRecords(filtered);
     } finally {
@@ -41,86 +65,82 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchData();
-  }, [filterDate]);
+  }, [filterDate, filterMonth]);
 
   const exportToExcel = () => {
-  const formatted = records.map((r, index) => ({
-    No: index + 1,
-    Nama: r.name,
-    Outlet: r.outlet_name || "-",
-    Foto: r.photo_url,
-    Waktu: new Date(r.created_at).toLocaleString("id-ID", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }),
-    Alamat: r.address,
-    Hasil_Kunjungan: r.kunjungan || "-",
-  }));
+    const formatted = records.map((r, index) => ({
+      No: index + 1,
+      Nama: r.name,
+      Outlet: r.outlet_name || "-",
+      Foto: r.photo_url,
+      Waktu: new Date(r.created_at).toLocaleString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+      Alamat: r.address,
+      Hasil_Kunjungan: r.kunjungan || "-",
+    }));
 
-  const worksheet = XLSX.utils.json_to_sheet(formatted);
+    const worksheet = XLSX.utils.json_to_sheet(formatted);
 
-  // 🔧 AUTO WIDTH untuk setiap kolom
-  const colWidths = Object.keys(formatted[0]).map((key) => {
-    const maxLength = Math.max(
-      key.length,
-      ...formatted.map((row: any) => String(row[key]).length)
-    );
-    return { wch: maxLength + 4 }; // padding 4
-  });
+    const colWidths = Object.keys(formatted[0]).map((key) => {
+      const maxLength = Math.max(
+        key.length,
+        ...formatted.map((row: any) => String(row[key]).length)
+      );
+      return { wch: maxLength + 4 };
+    });
 
-  worksheet["!cols"] = colWidths;
+    worksheet["!cols"] = colWidths;
 
-  // 🔧 BUAT WORKBOOK
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Presensi");
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Presensi");
 
-  const sheetRef = worksheet["!ref"] || "A1:A1";
-  const range = XLSX.utils.decode_range(sheetRef);
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
-    if (!worksheet[cellAddress]) continue;
+    const sheetRef = worksheet["!ref"] || "A1:A1";
+    const range = XLSX.utils.decode_range(sheetRef);
 
-    worksheet[cellAddress].s = {
-      fill: { fgColor: { rgb: "E3E8F0" } },
-      font: { bold: true },
-      alignment: { horizontal: "center", vertical: "center" },
-    };
-  }
-
-  // 🔧 STYLE SELAIN HEADER
-  for (let R = 1; R <= range.e.r; R++) {
     for (let C = range.s.c; C <= range.e.c; C++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
       if (!worksheet[cellAddress]) continue;
 
       worksheet[cellAddress].s = {
-        alignment: {
-          vertical: "center",
-          wrapText: true, // biar alamat & kunjungan rapi
-        },
+        fill: { fgColor: { rgb: "E3E8F0" } },
+        font: { bold: true },
+        alignment: { horizontal: "center", vertical: "center" },
       };
     }
-  }
 
-  // 🔧 EXPORT FILE
-  const excelBuffer = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array",
-    cellStyles: true,
-  });
+    for (let R = 1; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!worksheet[cellAddress]) continue;
 
-  const file = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(file, `data-presensi-${filterDate || "all"}.xlsx`);
-};
+        worksheet[cellAddress].s = {
+          alignment: {
+            vertical: "center",
+            wrapText: true,
+          },
+        };
+      }
+    }
 
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+      cellStyles: true,
+    });
+
+    const file = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(file, `data-presensi-${filterMonth || "all"}.xlsx`);
+  };
 
   const SkeletonRow = () => (
     <TableRow>
-      {[1, 2, 3, 4, 5, 6, 7].map((i) => (   // Tambah 1 skeleton col
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
         <TableCell key={i}>
           <div className="h-6 bg-gray-200/50 rounded animate-pulse"></div>
         </TableCell>
@@ -130,13 +150,10 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 md:p-8 flex justify-center relative overflow-hidden">
-
       <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10"></div>
 
-      {/* ⭐ Dashboard diperluas */}
       <Card className="w-full max-w-[1600px] bg-white/95 backdrop-blur-2xl shadow-2xl rounded-2xl border border-white/60 overflow-hidden hover:shadow-3xl transition-all duration-300">
-
         <div className="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500"></div>
 
         <CardHeader className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 md:gap-6 pb-6 pt-8">
@@ -148,13 +165,12 @@ export default function AdminPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-
             <div className="relative flex-1 sm:flex-none">
               <MagnifyingGlassIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
                 type="date"
                 value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-200 shadow-sm rounded-lg bg-gray-50/80 text-gray-700 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition"
               />
             </div>
@@ -173,7 +189,6 @@ export default function AdminPage() {
         <CardContent className="px-4 md:px-6 pb-8">
           <div className="w-full overflow-x-auto rounded-lg border border-gray-200/50">
             <Table className="min-w-full table-fixed">
-
               <TableHeader className="bg-gradient-to-r from-indigo-50/50 to-blue-50/50 border-b border-gray-200/50">
                 <TableRow>
                   <TableHead className="text-center text-sm font-semibold text-gray-700 h-12 w-[50px]">No</TableHead>
@@ -271,13 +286,11 @@ export default function AdminPage() {
                         </div>
                       </TableCell>
 
-                      {/* ⭐ KOLOM BARU — hasil kunjungan */}
                       <TableCell className="w-[220px] text-center py-4">
                         <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
                           {rec.kunjungan || "-"}
                         </div>
                       </TableCell>
-
                     </TableRow>
                   ))
                 )}
@@ -293,7 +306,6 @@ export default function AdminPage() {
             </div>
           )}
         </CardContent>
-
       </Card>
     </div>
   );
