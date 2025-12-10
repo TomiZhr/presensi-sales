@@ -11,7 +11,7 @@ import { ArrowPathIcon, CheckCircleIcon, MapPinIcon } from "@heroicons/react/24/
 export default function PresensiPage() {
   const [name, setName] = useState("");
   const [outlet, setOutlet] = useState(""); // ✅ Tambahan
-
+  const [hasilKunjungan, setHasilKunjungan] = useState("");
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -150,7 +150,8 @@ export default function PresensiPage() {
 
       const { error: insertError } = await supabase.from("presensi").insert({
         name,
-        outlet_name: outlet, // ✅ Tambahan
+        outlet_name: outlet,
+        kunjungan: hasilKunjungan, 
         photo_url,
         latitude: coords.lat,
         longitude: coords.long,
@@ -172,6 +173,34 @@ export default function PresensiPage() {
       setIsLoading(false);
     }
   };
+
+  const submitHasilKunjungan = async () => {
+    if (!hasilKunjungan) {
+      alert("Hasil kunjungan harus diisi");
+      return;
+    }
+
+    if (!coords || !address) {
+      alert("Lokasi belum tersedia, silakan refresh lokasi");
+      return;
+    }
+
+    const { error } = await supabase.from("kunjungan").insert({
+      hasil: hasilKunjungan, 
+      latitude: coords.lat,
+      longitude: coords.long,
+      address: address,
+      created_at: new Date(),
+    });
+
+    if (error) {
+      alert("❌ Gagal menyimpan hasil kunjungan");
+    } else {
+      alert("✅ Hasil kunjungan tersimpan!");
+      setHasilKunjungan("");
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-4 relative overflow-hidden">
@@ -338,6 +367,37 @@ export default function PresensiPage() {
               )}
             </div>
           </div>
+
+          {/* 🔵 FITUR HASIL KUNJUNGAN (1 input) */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-gray-700">
+              Hasil Kunjungan
+            </Label>
+
+            <textarea
+              placeholder="Tulis hasil kunjungan di sini..."
+              value={hasilKunjungan}
+              onChange={(e) => setHasilKunjungan(e.target.value)}
+              className="
+                w-full min-h-[120px]
+                bg-blue-50/70 
+                border border-blue-300 
+                focus:border-blue-500 
+                focus:ring-2 
+                focus:ring-blue-300/50 
+                rounded-xl 
+                shadow-inner 
+                p-3 
+                text-gray-700 
+                leading-relaxed 
+                resize-none 
+                font-medium 
+                tracking-wide 
+                outline-none
+              "
+            />
+          </div>
+
 
           {/* SUBMIT */}
           <Button
