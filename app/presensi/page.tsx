@@ -127,9 +127,9 @@ export default function PresensiPage() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !outlet || !photoBlob || !coords || !address) {
+    if (!name || !outlet || !photoBlob || !coords || !address || !hasilKunjungan) {
       setError(
-        "❌ Nama, outlet, foto, lokasi, dan alamat wajib diisi!"
+        "❌ Nama, outlet, foto, lokasi, dan hasil kunjungan wajib diisi!"
       );
       return;
     }

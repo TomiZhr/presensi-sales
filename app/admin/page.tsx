@@ -199,18 +199,12 @@ export default function AdminPage() {
               <TableHeader className="bg-gradient-to-r from-indigo-50/50 to-blue-50/50">
                 <TableRow>
                   <TableHead className="text-center w-[50px]">No</TableHead>
-                  <TableHead className="text-center w-[150px]">
-                    Nama
-                  </TableHead>
-                  <TableHead className="text-center w-[160px]">
-                    Customer / Outlet
-                  </TableHead>
+                  <TableHead className="text-center w-[150px]">Nama</TableHead>
+                  <TableHead className="text-center w-[160px]">Customer / Outlet</TableHead>
                   <TableHead className="text-center w-[90px]">Foto</TableHead>
                   <TableHead className="text-center w-[150px]">Waktu</TableHead>
                   <TableHead className="text-center w-[200px]">Alamat</TableHead>
-                  <TableHead className="text-center w-[220px]">
-                    Hasil Kunjungan
-                  </TableHead>
+                  <TableHead className="text-center w-[220px]">Hasil Kunjungan</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -223,48 +217,73 @@ export default function AdminPage() {
                   </>
                 ) : records.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      Tidak ada data presensi
-                    </TableCell>
+                   <TableCell colSpan={7} className="text-center py-12"> 
+                    <div className="flex flex-col items-center gap-2"> 
+                    <span className="text-3xl">📭</span>
+                     <p className="text-gray-500 font-medium">Tidak ada data presensi</p> 
+                     <p className="text-gray-400 text-sm">Coba ubah tanggal filter atau lakukan presensi lebih dahulu</p>
+                    </div> 
+                   </TableCell> 
                   </TableRow>
                 ) : (
                   records.map((rec, index) => (
                     <TableRow key={rec.id}>
-                      <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell className="text-center">{rec.name}</TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="w-[60px] text-center text-sm md:text-base text-gray-700 font-medium py-4">
+                        {index + 1}
+                      </TableCell>
+
+                      <TableCell className="w-[150px] text-center py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
+                        {rec.name}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="w-[150px] text-center py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
                         {rec.outlet_name}
+                        </div>
                       </TableCell>
 
                       {/* FOTO */}
-                      <TableCell className="text-center">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <img
-                              src={rec.photo_url}
-                              className="w-12 h-12 rounded-lg object-cover cursor-pointer shadow hover:scale-105 transition"
-                            />
-                          </DialogTrigger>
-
-                          <DialogContent className="p-0 bg-black/90 border-none">
-                            <img
-                              src={rec.photo_url}
-                              className="max-h-[90vh] max-w-[90vw]"
-                            />
-                          </DialogContent>
-                        </Dialog>
+                      <TableCell className="w-[90px] py-4">
+                         <div className="w-full h-full flex justify-center items-center"> 
+                            <Dialog> 
+                              <DialogTrigger asChild> 
+                                <div className="cursor-pointer group relative"> 
+                                  <img src={rec.photo_url} className="w-12 h-12 md:w-14 md:h-14 rounded-lg object-cover shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all" alt="foto presensi" /> 
+                                    <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/20 transition-all">
+                                    </div> 
+                                </div> 
+                              </DialogTrigger> 
+                              <DialogContent className="p-0 bg-black/95 border-none max-w-full flex justify-center items-center rounded-xl"> 
+                                  <div className="relative">
+                                      <img src={rec.photo_url} className="max-h-[90vh] max-w-[90vw] rounded-lg" alt="zoom" /> 
+                                      <a href={rec.photo_url} download className="absolute top-4 right-4 bg-white/95 hover:bg-white text-black px-4 py-2 rounded-lg shadow-lg text-sm font-semibold transition-all" > 
+                                      💾 Download 
+                                      </a> 
+                                  </div> 
+                              </DialogContent> 
+                            </Dialog> 
+                          </div> 
                       </TableCell>
 
                       {/* WAKTU */}
-                      <TableCell className="text-center">
-                        <Badge className="px-3 py-1 bg-indigo-600 text-white rounded-lg">
-                          {new Date(rec.created_at).toLocaleString("id-ID")}
-                        </Badge>
+                      <TableCell className="w-[130px] text-center text-sm md:text-base py-4">
+                        <Badge className="rounded-lg px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs md:text-sm shadow-md font-semibold">
+                           {new Date(rec.created_at).toLocaleString("id-ID")} 
+                        </Badge> 
                       </TableCell>
 
-                      <TableCell className="text-center">{rec.address}</TableCell>
-                      <TableCell className="text-center">
-                        {rec.kunjungan || "-"}
+                      <TableCell className="w-[200px] text-center py-4">
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
+                           {rec.address} 
+                        </div> 
+                      </TableCell>
+
+                      <TableCell className="w-[220px] text-center py-4"> 
+                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide"> 
+                          {rec.kunjungan || "-"} 
+                        </div> 
                       </TableCell>
                     </TableRow>
                   ))
